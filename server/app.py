@@ -14,12 +14,12 @@ CORS(app)
 migrate = Migrate(app, db)
 db.init_app(app)
 
-# Root route
+
 @app.route('/')
 def index():
     return jsonify({'message': 'Welcome to the Recipe API'}), 200
 
-# User routes
+
 @app.route('/api/users', methods=['POST'])
 def create_user():
     try:
@@ -38,7 +38,7 @@ def get_user(id):
     user = User.query.get_or_404(id)
     return jsonify(user.to_dict())
 
-# Recipe routes - Full CRUD
+
 @app.route('/api/recipes', methods=['GET'])
 def get_recipes():
     recipes = Recipe.query.all()
@@ -94,10 +94,8 @@ def update_recipe(id):
                 setattr(recipe, key, value)
 
         if 'ingredients' in data:
-            # Clear existing ingredients
             RecipeIngredient.query.filter_by(recipe_id=recipe.id).delete()
 
-            # Add new ingredients
             for ingredient_data in data['ingredients']:
                 ingredient = Ingredient.query.filter_by(name=ingredient_data['name'].lower()).first()
                 if not ingredient:
@@ -125,7 +123,6 @@ def delete_recipe(id):
     db.session.commit()
     return '', 204
 
-# Comment routes
 @app.route('/api/recipes/<int:recipe_id>/comments', methods=['GET'])
 def get_recipe_comments(recipe_id):
     comments = Comment.query.filter_by(recipe_id=recipe_id).all()
@@ -146,7 +143,6 @@ def create_comment():
     except Exception as e:
         return {'error': str(e)}, 400
 
-# Saved Recipe routes
 @app.route('/api/saved-recipes', methods=['POST'])
 def save_recipe():
     try:
@@ -167,7 +163,6 @@ def get_saved_recipes(user_id):
     saved_recipes = SavedRecipe.query.filter_by(user_id=user_id).all()
     return jsonify([sr.to_dict() for sr in saved_recipes])
 
-# Ingredient routes
 @app.route('/api/ingredients', methods=['GET'])
 def get_ingredients():
     ingredients = Ingredient.query.all()
