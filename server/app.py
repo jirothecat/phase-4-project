@@ -14,6 +14,11 @@ CORS(app)
 migrate = Migrate(app, db)
 db.init_app(app)
 
+# Root route
+@app.route('/')
+def index():
+    return jsonify({'message': 'Welcome to the Recipe API'}), 200
+
 # User routes
 @app.route('/api/users', methods=['POST'])
 def create_user():
