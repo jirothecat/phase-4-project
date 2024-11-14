@@ -1,38 +1,51 @@
-// src/components/RecipeList.js
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 function RecipeList() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetch('/api/recipes')
-      .then(r => r.json())
+      .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then(data => {
+        console.log('Fetched data:', data);
         setRecipes(data);
-        setLoading(false);
       })
       .catch(error => {
-        console.error('Error:', error);
+        console.error('Fetch error:', error);
+        setError(error.message);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);
 
   if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h2>All Recipes</h2>
-      <div style={{ display: 'grid', gap: '1rem' }}>
-        {recipes.map(recipe => (
-          <div key={recipe.id} style={{ border: '1px solid #ddd', padding: '1rem' }}>
-            <h3>{recipe.title}</h3>
-            <p>{recipe.description}</p>
-            <Link to={`/recipes/${recipe.id}`}>View Details</Link>
-          </div>
-        ))}
-      </div>
+    <div>
+      <h2>Recipes</h2>
+      {recipes.length === 0 ? (
+        <p>No recipes found</p>
+      ) : (
+        <div>
+          {recipes.map(recipe => (
+            <div key={recipe.id}>
+              <h3>{recipe.title}</h3>
+              <p>{recipe.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
