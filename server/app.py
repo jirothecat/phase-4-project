@@ -42,7 +42,22 @@ def get_user(id):
 @app.route('/api/recipes', methods=['GET'])
 def get_recipes():
     recipes = Recipe.query.all()
-    return jsonify([recipe.to_dict() for recipe in recipes])
+    return jsonify([{
+        'id': recipe.id,
+        'title': recipe.title,
+        'description': recipe.description,
+        'instructions': recipe.instructions,
+        'cooking_time': recipe.cooking_time,
+        'created_at': recipe.created_at,
+        'user_id': recipe.user_id,
+        'user': recipe.user.username,
+        'recipe_ingredients': [{
+            'id': ri.id,
+            'quantity': ri.quantity,
+            'unit': ri.unit,
+            'ingredient': ri.ingredient.name
+        } for ri in recipe.recipe_ingredients]
+    } for recipe in recipes])
 
 @app.route('/api/recipes/<int:id>', methods=['GET'])
 def get_recipe(id):

@@ -13,15 +13,13 @@ db = SQLAlchemy(metadata=metadata)
 
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
-
-    serialize_rules = ('-recipes.user', '-saved_recipes.user', '-comments.user')
+    serialize_rules = ('-recipes.user', '-saved_recipes.user', '-comments.user',)
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, unique=True, nullable=False)
-
-    recipes = db.relationship('Recipe', back_populates='user', cascade='all, delete-orphan')
-    saved_recipes = db.relationship('SavedRecipe', back_populates='user', cascade='all, delete-orphan')
-    comments = db.relationship('Comment', back_populates='user', cascade='all, delete-orphan')
+    recipes = db.relationship('Recipe', back_populates='user')
+    saved_recipes = db.relationship('SavedRecipe', back_populates='user')
+    comments = db.relationship('Comment', back_populates='user')
 
     @validates('username')
     def validate_username(self, key, username):
@@ -31,9 +29,17 @@ class User(db.Model, SerializerMixin):
 
 class Recipe(db.Model, SerializerMixin):
     __tablename__ = 'recipes'
-
-    serialize_rules = ('-user.recipes', '-comments.recipe', '-recipe_ingredients.recipe', '-saved_recipes.recipe')
-
+    serialize_rules = (
+        '-user.recipes',
+        '-comments.recipe',
+        '-recipe_ingredients.recipe',
+        '-saved_recipes.recipe',
+        '-recipe_ingredients.ingredient.recipe_ingredients',
+        '-recipe_ingredients.recipe.user',
+        '-recipe_ingredients.recipe.comments',
+        '-recipe_ingredients.recipe.saved_recipes'
+    )
+    
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
     description = db.Column(db.Text)
@@ -41,13 +47,11 @@ class Recipe(db.Model, SerializerMixin):
     cooking_time = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-
-    user = db.relationship('User', back_populates='recipes')
-    comments = db.relationship('Comment', back_populates='recipe', cascade='all, delete-orphan')
-    recipe_ingredients = db.relationship('RecipeIngredient', back_populates='recipe', cascade='all, delete-orphan')
-    saved_recipes = db.relationship('SavedRecipe', back_populates='recipe', cascade='all, delete-orphan')
     
-    ingredients = association_proxy('recipe_ingredients', 'ingredient')
+    user = db.relationship('User', back_populates='recipes')
+    comments = db.relationship('Comment', back_populates='recipe')
+    recipe_ingredients = db.relationship('RecipeIngredient', back_populates='recipe')
+    saved_recipes = db.relationship('SavedRecipe', back_populates='recipe')
 
     @validates('title')
     def validate_title(self, key, title):
@@ -58,7 +62,7 @@ class Recipe(db.Model, SerializerMixin):
 class Ingredient(db.Model, SerializerMixin):
     __tablename__ = 'ingredients'
 
-    serialize_rules = ('-recipe_ingredients.ingredient',)
+    serialize_rules = ('-recipe_ingredients.ingredient', '-recipe_ingredients.recipe.recipe_ingredients', '-recipes.recipe_ingredients')
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
@@ -75,7 +79,7 @@ class Ingredient(db.Model, SerializerMixin):
 class RecipeIngredient(db.Model, SerializerMixin):
     __tablename__ = 'recipe_ingredients'
 
-    serialize_rules = ('-recipe.recipe_ingredients', '-ingredient.recipe_ingredients')
+    serialize_rules = ('-recipe.recipe_ingredients', '-ingredient.recipe_ingredients', '-recipe.user', '-recipe.comments')
 
     id = db.Column(db.Integer, primary_key=True)
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), nullable=False)
